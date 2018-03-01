@@ -11,7 +11,6 @@
 #include "ros/ros.h"
 #include <tf/transform_broadcaster.h>
 
-
 using namespace std;
 using namespace boost;
 using namespace ros;
@@ -31,18 +30,18 @@ public:
   {
     switch (team_index)
     {
-      case 0:
-        return setTeamName("red");
-        break;
-      case 1:
-        return setTeamName("green");
-        break;
-      case 2:
-        return setTeamName("blue");
-        break;
-      default:
-        cout << "wrong team index given. Cannot set team" << endl;
-        break;
+    case 0:
+      return setTeamName("red");
+      break;
+    case 1:
+      return setTeamName("green");
+      break;
+    case 2:
+      return setTeamName("blue");
+      break;
+    default:
+      cout << "wrong team index given. Cannot set team" << endl;
+      break;
     }
   }
 
@@ -67,7 +66,7 @@ public:
     return team;
   }
 
-  string name;  // A public atribute
+  string name; // A public atribute
 
 private:
   string team;
@@ -87,11 +86,22 @@ public:
     blue_team = shared_ptr<Team>(new Team("blue"));
     green_team = shared_ptr<Team>(new Team("green"));
   }
+
+  void move(void)
+  {
+    tf::TransformBroadcaster br;
+    tf::Transform transform;
+    transform.setOrigin(tf::Vector3(13, 13, 0.0));
+    tf::Quaternion q;
+    q.setRPY(0, 0, 0);
+    transform.setRotation(q);
+    br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", name));
+  }
 };
 
-}  // end of namespace
+} // end of namespace
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
   string name = "amartins";
   string team = "blue";
@@ -101,15 +111,6 @@ int main(int argc, char** argv)
   rws_amartins::MyPlayer my_player(name, team);
 
   ros::NodeHandle n;
-
-  static tf::TransformBroadcaster br;
-  tf::Transform transform;
-  transform.setOrigin( tf::Vector3(13, 13, 0.0) );
-  tf::Quaternion q;
-  q.setRPY(0, 0, 0);
-  transform.setRotation(q);
-  br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", name));
-
 
   ros::spin();
 }
