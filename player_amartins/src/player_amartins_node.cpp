@@ -106,11 +106,15 @@ int main(int argc, char **argv)
   string name = "amartins";
   string team = "blue";
   ros::init(argc, argv, name);
-
+  ros::NodeHandle n;
   // Creating an instance of class Player
   rws_amartins::MyPlayer my_player(name, team);
 
-  ros::NodeHandle n;
+  ros::Rate loop_rate(10);
 
-  ros::spin();
+  while(ros::ok()){
+    my_player.move();
+    ros::spinOnce();
+    loop_rate.sleep();
+  }
 }
