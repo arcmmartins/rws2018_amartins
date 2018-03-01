@@ -1,7 +1,23 @@
 #include <iostream>
+#include <sstream>
+#include <vector>
+
+// Boost includes
+#include <boost/shared_ptr.hpp>
+
+// ros
+#include <rws2018_libs/team.h>
+#include <std_msgs/String.h>
+#include "ros/ros.h"
+#include <tf/transform_broadcaster.h>
+
 
 using namespace std;
+using namespace boost;
+using namespace ros;
 
+namespace rws_amartins
+{
 class Player
 {
 public:
@@ -58,25 +74,42 @@ private:
 };
 
 // Class myPlayer extends class Player
-class myPlayer : public Player
+class MyPlayer : public Player
 {
 public:
-  myPlayer(string name, string team) : Player(name)
+  shared_ptr<Team> red_team;
+  shared_ptr<Team> blue_team;
+  shared_ptr<Team> green_team;
+  MyPlayer(string name, string team) : Player(name)
   {
     setTeamName(team);
+    red_team = shared_ptr<Team>(new Team("red"));
+    blue_team = shared_ptr<Team>(new Team("blue"));
+    green_team = shared_ptr<Team>(new Team("green"));
   }
 };
 
-int main()
-{
-  // Creating an instance of class Player
-  Player player("amartins");
-  player.setTeamName("red");
-  player.setTeamName(2);
-  cout << "player.name is " << player.name << endl;
-  cout << "team is " << player.getTeamName() << endl;
+}  // end of namespace
 
-  myPlayer my_player("amartins", "green");
-  std::cout << "my_player.name is " << my_player.name << std::endl;
-  std::cout << "team is " << my_player.getTeamName() << std::endl;
+int main(int argc, char** argv)
+{
+  string name = "amartins";
+  string team = "blue";
+  ros::init(argc, argv, name);
+
+  // Creating an instance of class Player
+  rws_amartins::MyPlayer my_player(name, team);
+
+  ros::NodeHandle n;
+
+  static tf::TransformBroadcaster br;
+  tf::Transform transform;
+  transform.setOrigin( tf::Vector3(13, 13, 0.0) );
+  tf::Quaternion q;
+  q.setRPY(0, 0, 0);
+  transform.setRotation(q);
+  br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", name));
+
+
+  ros::spin();
 }
