@@ -91,7 +91,7 @@ public:
   {
     static tf::TransformBroadcaster br;
     tf::Transform transform;
-    transform.setOrigin(tf::Vector3(13, 13, 0.0));
+    transform.setOrigin(tf::Vector3(3, 5, 0.0));
     tf::Quaternion q;
     q.setRPY(0, 0, 0);
     transform.setRotation(q);
