@@ -79,6 +79,7 @@ public:
   shared_ptr<Team> red_team;
   shared_ptr<Team> blue_team;
   shared_ptr<Team> green_team;
+  tf::TransformBroadcaster br;
   MyPlayer(string name, string team) : Player(name)
   {
     setTeamName(team);
@@ -89,7 +90,6 @@ public:
 
   void move(void)
   {
-    static tf::TransformBroadcaster br;
     tf::Transform transform;
     transform.setOrigin(tf::Vector3(3, 5, 0.0));
     tf::Quaternion q;
