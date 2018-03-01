@@ -89,7 +89,7 @@ public:
 
   void move(void)
   {
-    tf::TransformBroadcaster br;
+    static tf::TransformBroadcaster br;
     tf::Transform transform;
     transform.setOrigin(tf::Vector3(13, 13, 0.0));
     tf::Quaternion q;
@@ -112,7 +112,8 @@ int main(int argc, char **argv)
 
   ros::Rate loop_rate(10);
 
-  while(ros::ok()){
+  while (ros::ok())
+  {
     my_player.move();
     ros::spinOnce();
     loop_rate.sleep();
