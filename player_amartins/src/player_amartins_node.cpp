@@ -107,7 +107,6 @@ public:
 
   void warp()
   {
-    tf::Transform transform;
     transform.setOrigin(tf::Vector3(x, y, 0.0));
     tf::Quaternion q;
     q.setRPY(0, 0, alfa);
@@ -117,28 +116,32 @@ public:
 
   void move(const rws2018_msgs::MakeAPlay::ConstPtr& msg)
   {
-    tf::Transform transform;
+    double max_dist = msg->turtle;
+    double max_delta_alpha = M_PI / 30;
+    /* AI */
+    double intended_dist_x = 6;
+    double intended_dist_y = 6;
+    double intended_delta_alpha = M_PI/2;
+    /******/
 
-    if (x > 5)
-    {
-      speedx = -0.3;
-    }
-    if (x < -5)
-    {
-      speedx = 0.3;
-    }
-    if (y > 5)
-    {
-      speedy = -0.3;
-    }
-    if (y < -5)
-    {
-      speedy = 0.3;
-    }
-    transform.setOrigin(tf::Vector3(x += speedx, y += speedy, 0.0));
+    /* constrains */
+    double actual_dist_x = intended_dist_x > max_dist ? max_dist : intended_dist_x;
+    double actual_dist_y = intended_dist_y > max_dist ? max_dist : intended_dist_y;
+    double actual_delta_alpha = fabs(intended_delta_alpha) > fabs(max_delta_alpha) ?
+                                    max_delta_alpha * intended_delta_alpha / fabs(intended_delta_alpha) :
+                                    intended_delta_alpha;
+    /*************/
+
+    /* bounds */
+    /**********/
+
+    tf::Transform displacement_transform;
+
+    displacement_transform.setOrigin(tf::Vector3(actual_dist_x, actual_dist_y, 0.0));
     tf::Quaternion q;
-    q.setRPY(0, 0, 0);
-    transform.setRotation(q);
+    q.setRPY(0, 0, actual_delta_alpha);
+    displacement_transform.setRotation(q);
+    transform = transform * displacement_transform;
     br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", name));
   }
 
@@ -148,6 +151,7 @@ private:
   double speedx, speedy, alfa;
   ros::NodeHandle n;
   shared_ptr<ros::Subscriber> sub;
+  tf::Transform transform;
 };
 
 }  // end of namespace
