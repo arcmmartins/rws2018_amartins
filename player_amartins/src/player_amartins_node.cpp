@@ -10,13 +10,14 @@
 #include <rws2018_msgs/MakeAPlay.h>
 #include <std_msgs/String.h>
 #include <tf/transform_broadcaster.h>
-#include "ros/ros.h"
 #include <visualization_msgs/Marker.h>
-
+#include "ros/ros.h"
+#include <tf/transform_listener.h>
+#define DEFAULT_TIME 0.05
 using namespace std;
 using namespace boost;
 using namespace ros;
-
+using namespace tf;
 namespace rws_amartins
 {
 class Player
@@ -81,7 +82,7 @@ public:
   shared_ptr<Team> red_team;
   shared_ptr<Team> blue_team;
   shared_ptr<Team> green_team;
-  tf::TransformBroadcaster br;
+  TransformBroadcaster br;
   MyPlayer(string name, string team, string type) : Player(name)
   {
     setTeamName(team);
@@ -101,45 +102,58 @@ public:
     red_team = shared_ptr<Team>(new Team("red"));
     blue_team = shared_ptr<Team>(new Team("blue"));
     green_team = shared_ptr<Team>(new Team("green"));
-    sub = shared_ptr<ros::Subscriber>(new ros::Subscriber());
+    sub = shared_ptr<Subscriber>(new Subscriber());
     *sub = n.subscribe("/make_a_play", 1000, &MyPlayer::move, this);
+    vis_pub = n.advertise<visualization_msgs::Marker>("/bocas", 0);
     warp();
-    vis_pub = n.advertise<visualization_msgs::Marker>( "/bocas", 0 );
+
+    piropo("do not fear, nando fabricio is here", 1);
   }
+
+
+  double getAngleToPLayer(string other_player, double time_to_wait=DEFAULT_TIME)
+      {
+        StampedTransform t; //The transform object
+        Time now = Time(0); //get the latest transform received
+
+        try{
+          listener.waitForTransform(name, other_player, now, Duration(time_to_wait));
+          listener.lookupTransform(name, other_player, now, t);
+        }
+        catch (TransformException& ex){
+          ROS_ERROR("%s",ex.what());
+          return NAN;
+        }
+
+        return atan2(t.getOrigin().y(), t.getOrigin().x());
+      }
 
   void warp()
   {
-    transform.setOrigin(tf::Vector3(x, y, 0.0));
-    tf::Quaternion q;
+    transform.setOrigin(Vector3(x, y, 0.0));
+    Quaternion q;
     q.setRPY(0, 0, alfa);
     transform.setRotation(q);
-    br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", name));
+    br.sendTransform(StampedTransform(transform, Time::now(), "world", name));
   }
 
-  void piropo()
+  void piropo(string boca, int id)
   {
     visualization_msgs::Marker marker;
-    marker.header.frame_id = "world";
-    marker.header.stamp = ros::Time();
+    marker.header.frame_id = name;
+    marker.header.stamp = Time();
     marker.ns = name;
-    marker.id = 0;
+    marker.lifetime = Duration(2.0);
+    marker.id = id;
     marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
     marker.action = visualization_msgs::Marker::ADD;
-    marker.pose.position.x = x;
-    marker.pose.position.y = y;
-    marker.pose.position.z = 3;
-    marker.pose.orientation.x = 0.0;
-    marker.pose.orientation.y = 0.0;
-    marker.pose.orientation.z = 0.0;
     marker.pose.orientation.w = 1.0;
-    marker.scale.x = 0.4;
-    marker.scale.y = 0.4;
-    marker.scale.z = 0.4;
+    marker.scale.z = 0.3;
     marker.color.a = 1.0;  // Don't forget to set the alpha!
-    marker.color.r = 0.0;
-    marker.color.g = 0.0;
+    marker.color.r = 0.3;
+    marker.color.g = 1.0;
     marker.color.b = 1.0;
-    marker.text = "nando fabricio in da house";
+    marker.text = boca;
     vis_pub.publish(marker);
   }
 
@@ -147,44 +161,49 @@ public:
   {
     double max_dist = msg->turtle;
     double max_delta_alpha = M_PI / 30;
+
+
     /* AI */
-    double intended_dist_x = 6;
-    double intended_dist_y = 6;
-    double intended_delta_alpha = M_PI / 2;
+    double intended_dist_x = 3;
+    double intended_dist_y = 3;
+    double intended_delta_alpha = getAngleToPLayer("blourenco");
+    if(isnan(intended_delta_alpha))
+      intended_delta_alpha = 0;
     /******/
 
     /* constrains */
-    double actual_dist_x = intended_dist_x > max_dist ? max_dist : intended_dist_x;
-    double actual_dist_y = intended_dist_y > max_dist ? max_dist : intended_dist_y;
+    double actual_dist_x = abs(intended_dist_x) > max_dist ? max_dist : intended_dist_x;
+    double actual_dist_y = abs(intended_dist_y) > max_dist ? max_dist : intended_dist_y;
     double actual_delta_alpha = fabs(intended_delta_alpha) > fabs(max_delta_alpha) ?
                                     max_delta_alpha * intended_delta_alpha / fabs(intended_delta_alpha) :
                                     intended_delta_alpha;
     /*************/
 
     /* bounds */
+
     /**********/
+    Transform displacement_transform;
 
-    tf::Transform displacement_transform;
-
-    displacement_transform.setOrigin(tf::Vector3(actual_dist_x, actual_dist_y, 0.0));
-    tf::Quaternion q;
+    displacement_transform.setOrigin(Vector3(actual_dist_x, actual_dist_y, 0.0));
+    Quaternion q;
     q.setRPY(0, 0, actual_delta_alpha);
     displacement_transform.setRotation(q);
     transform = transform * displacement_transform;
-    br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", name));
+    br.sendTransform(StampedTransform(transform, Time::now(), "world", name));
     x = transform.getOrigin().x();
     y = transform.getOrigin().y();
-    piropo();
+    piropo("NANDO FABRICIO vai te apanhar blourenco", 0);
   }
 
 private:
   float x, y;
   string type;
   double speedx, speedy, alfa;
-  ros::NodeHandle n;
-  shared_ptr<ros::Subscriber> sub;
-  tf::Transform transform;
-  ros::Publisher vis_pub;
+  NodeHandle n;
+  shared_ptr<Subscriber> sub;
+  Transform transform;
+  Publisher vis_pub;
+  TransformListener listener;
 };
 
 }  // end of namespace
@@ -194,10 +213,10 @@ int main(int argc, char** argv)
   string name = "amartins";
   string team = "blue";
   string type = "turtle";
-  ros::init(argc, argv, name);
-  ros::NodeHandle n;
+  init(argc, argv, name);
+  NodeHandle n;
   // Creating an instance of class Player
   rws_amartins::MyPlayer my_player(name, team, type);
 
-  ros::spin();
+  spin();
 }
