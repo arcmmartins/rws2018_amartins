@@ -172,8 +172,7 @@ public:
     return tmp_player;
   }
 
-
-string findClosestHunter()
+  string findClosestHunter()
   {
     double min_dist = 100000;
     string tmp_player = "tmarques";
@@ -191,7 +190,6 @@ string findClosestHunter()
     }
     return tmp_player;
   }
-
 
   double getDistanceToPLayer(string other_player, double time_to_wait = DEFAULT_TIME)
   {
@@ -248,11 +246,25 @@ string findClosestHunter()
 
     /* AI */
     string target = findClosestPlayer();
+    string closest_hunter = findClosestHunter();
     double intended_dist = 3;
     double intended_delta_alpha = getAngleToPLayer(target);
     if (isnan(intended_delta_alpha))
       intended_delta_alpha = 0;
     /******/
+    if (getDistanceToPLayer(target) < getDistanceToPLayer(closest_hunter))
+    {
+      intended_dist = 3;
+      intended_delta_alpha = getAngleToPLayer(target);
+      if (isnan(intended_delta_alpha))
+        intended_delta_alpha = 0;
+    }
+    else if (getDistanceToPLayer(closest_hunter) < 1 && getDistanceToPLayer(closest_hunter) < getDistanceToPLayer(target)){
+      intended_dist = 3;
+      intended_delta_alpha = -getAngleToPLayer(closest_hunter);
+      if (isnan(intended_delta_alpha))
+        intended_delta_alpha = 0;
+    }
 
     /* constrains */
     double actual_dist = abs(intended_dist) > max_dist ? max_dist : intended_dist;
