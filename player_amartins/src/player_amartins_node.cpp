@@ -85,21 +85,37 @@ public:
   {
     setTeamName(team);
     this->type = type;
-    x = randomizePosition();
-    y = randomizePosition();
-    speedx= 0.5;
-    speedy= 0.5;
+    srand(666 * time(NULL));
+    x = ((double)rand() / (double)RAND_MAX * 10 - 5);
+    srand(12333 * time(NULL));
+    y = ((double)rand() / (double)RAND_MAX * 10 - 5);
+    speedx = 0.5;
+    speedy = 0.5;
+    alfa = M_PI;
+    ROS_INFO_STREAM("( " << name << " , " << team << " , " << type << " , x: " << x << " , y: " << y << " )");
+
     red_team = shared_ptr<Team>(new Team("red"));
     blue_team = shared_ptr<Team>(new Team("blue"));
     green_team = shared_ptr<Team>(new Team("green"));
     sub = shared_ptr<ros::Subscriber>(new ros::Subscriber());
     *sub = n.subscribe("/make_a_play", 1000, &MyPlayer::move, this);
+    warp();
+  }
+
+  void warp()
+  {
+    tf::Transform transform;
+    transform.setOrigin(tf::Vector3(x, y, 0.0));
+    tf::Quaternion q;
+    q.setRPY(0, 0, alfa);
+    transform.setRotation(q);
+    br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", name));
   }
 
   void move(const rws2018_msgs::MakeAPlay::ConstPtr& msg)
   {
     tf::Transform transform;
-    
+
     if (x > 5)
     {
       speedx = -0.3;
@@ -116,7 +132,7 @@ public:
     {
       speedy = 0.3;
     }
-    transform.setOrigin(tf::Vector3(x += speedx, y +=speedy, 0.0));
+    transform.setOrigin(tf::Vector3(x += speedx, y += speedy, 0.0));
     tf::Quaternion q;
     q.setRPY(0, 0, 0);
     transform.setRotation(q);
@@ -126,7 +142,7 @@ public:
 private:
   float x, y;
   string type;
-  double speedx, speedy;
+  double speedx, speedy, alfa;
   ros::NodeHandle n;
   shared_ptr<ros::Subscriber> sub;
 };
@@ -142,7 +158,6 @@ int main(int argc, char** argv)
   ros::NodeHandle n;
   // Creating an instance of class Player
   rws_amartins::MyPlayer my_player(name, team, type);
-  ROS_INFO_STREAM("( " << name << " , " << team << " , " << type << " )");
 
   ros::spin();
 }
