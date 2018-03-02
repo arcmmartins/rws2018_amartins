@@ -159,10 +159,12 @@ public:
   {
     double min_dist = 100000;
     string tmp_player = "moliveira";
-    for (int i = 0; i< my_preys->player_names.size();i++)
+    for (int i = 0; i < my_preys->player_names.size(); i++)
     {
       string player_name = my_preys->player_names[i];
       double dist = getDistanceToPLayer(player_name);
+      if (isnan(dist))
+        continue;
       if (dist < min_dist)
       {
         min_dist = dist;
@@ -227,16 +229,14 @@ public:
 
     /* AI */
     string target = findClosestPlayer();
-    double intended_dist_x = 3;
-    double intended_dist_y = 3;
+    double intended_dist = 3;
     double intended_delta_alpha = getAngleToPLayer(target);
     if (isnan(intended_delta_alpha))
       intended_delta_alpha = 0;
     /******/
 
     /* constrains */
-    double actual_dist_x = abs(intended_dist_x) > max_dist ? max_dist : intended_dist_x;
-    double actual_dist_y = abs(intended_dist_y) > max_dist ? max_dist : intended_dist_y;
+    double actual_dist = abs(intended_dist) > max_dist ? max_dist : intended_dist;
     double actual_delta_alpha = fabs(intended_delta_alpha) > fabs(max_delta_alpha) ?
                                     max_delta_alpha * intended_delta_alpha / fabs(intended_delta_alpha) :
                                     intended_delta_alpha;
@@ -247,7 +247,7 @@ public:
     /**********/
     Transform displacement_transform;
 
-    displacement_transform.setOrigin(Vector3(actual_dist_x, actual_dist_y, 0.0));
+    displacement_transform.setOrigin(Vector3(actual_dist, 0, 0.0));
     Quaternion q;
     q.setRPY(0, 0, actual_delta_alpha);
     displacement_transform.setRotation(q);
