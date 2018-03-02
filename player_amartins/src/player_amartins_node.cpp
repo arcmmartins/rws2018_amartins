@@ -85,9 +85,12 @@ public:
   {
     setTeamName(team);
     this->type = type;
-    srand(666 * time(NULL));
+    struct timeval t1;
+    gettimeofday(&t1, NULL);
+    srand(t1.tv_usec);
     x = ((double)rand() / (double)RAND_MAX * 10 - 5);
-    srand(12333 * time(NULL));
+    gettimeofday(&t1, NULL);
+    srand(t1.tv_usec);
     y = ((double)rand() / (double)RAND_MAX * 10 - 5);
     speedx = 0.5;
     speedy = 0.5;
