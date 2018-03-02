@@ -214,7 +214,7 @@ public:
     marker.scale.z = 0.3;
     marker.color.a = 1.0;  // Don't forget to set the alpha!
     marker.color.r = 0.3;
-    marker.color.g = 1.0;
+    marker.color.g = 0.0;
     marker.color.b = 1.0;
     marker.text = boca;
     vis_pub.publish(marker);
