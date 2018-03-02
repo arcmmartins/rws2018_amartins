@@ -157,9 +157,9 @@ public:
   {
     double min_dist = 100000;
     string tmp_player = "moliveira";
-    for (int i = 0; i < my_preys->player_names.size(); i++)
+    for (int i = 0; i < alive_preys.size(); i++)
     {
-      string player_name = my_preys->player_names[i];
+      string player_name = alive_preys[i];
       double dist = getDistanceToPLayer(player_name);
       if (isnan(dist))
         continue;
@@ -243,7 +243,7 @@ public:
   {
     double max_dist = msg->turtle;
     double max_delta_alpha = M_PI / 30;
-
+    alive_preys = msg->red_alive;
     /* AI */
     string target = findClosestPlayer();
     string closest_hunter = findClosestHunter();
@@ -292,6 +292,7 @@ public:
 private:
   float x, y;
   string type;
+  vector<string> alive_preys;
   double alfa;
   NodeHandle n;
   shared_ptr<Subscriber> sub;
