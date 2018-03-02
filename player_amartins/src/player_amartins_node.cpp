@@ -7,9 +7,10 @@
 
 // ros
 #include <rws2018_libs/team.h>
+#include <rws2018_msgs/MakeAPlay.h>
 #include <std_msgs/String.h>
-#include "ros/ros.h"
 #include <tf/transform_broadcaster.h>
+#include "ros/ros.h"
 
 using namespace std;
 using namespace boost;
@@ -30,18 +31,18 @@ public:
   {
     switch (team_index)
     {
-    case 0:
-      return setTeamName("red");
-      break;
-    case 1:
-      return setTeamName("green");
-      break;
-    case 2:
-      return setTeamName("blue");
-      break;
-    default:
-      ROS_ERROR_STREAM("wrong team index given. Cannot set team");
-      break;
+      case 0:
+        return setTeamName("red");
+        break;
+      case 1:
+        return setTeamName("green");
+        break;
+      case 2:
+        return setTeamName("blue");
+        break;
+      default:
+        ROS_ERROR_STREAM("wrong team index given. Cannot set team");
+        break;
     }
   }
 
@@ -66,7 +67,7 @@ public:
     return team;
   }
 
-  string name; // A public atribute
+  string name;  // A public atribute
 
 private:
   string team;
@@ -80,43 +81,48 @@ public:
   shared_ptr<Team> blue_team;
   shared_ptr<Team> green_team;
   tf::TransformBroadcaster br;
-  MyPlayer(string name, string team) : Player(name)
+  MyPlayer(string name, string team, string type) : Player(name)
   {
     setTeamName(team);
+    this->type = type;
     red_team = shared_ptr<Team>(new Team("red"));
     blue_team = shared_ptr<Team>(new Team("blue"));
     green_team = shared_ptr<Team>(new Team("green"));
+    sub = shared_ptr<ros::Subscriber> (new ros::Subscriber());
+    *sub = n.subscribe("/make_a_play", 1000, &MyPlayer::move, this);
   }
 
-  void move(void)
+  void move(const rws2018_msgs::MakeAPlay::ConstPtr& msg)
   {
+    static float x = 0;
     tf::Transform transform;
-    transform.setOrigin(tf::Vector3(3, 5, 0.0));
+    ROS_INFO_STREAM(name << " moving" );
+    transform.setOrigin(tf::Vector3(x += 0.01, 5, 0.0));
     tf::Quaternion q;
     q.setRPY(0, 0, 0);
     transform.setRotation(q);
     br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", name));
   }
+
+private:
+  string type;
+  double speed;
+  ros::NodeHandle n;
+  shared_ptr<ros::Subscriber> sub;
 };
 
-} // end of namespace
+}  // end of namespace
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
   string name = "amartins";
   string team = "blue";
+  string type = "turtle";
   ros::init(argc, argv, name);
   ros::NodeHandle n;
   // Creating an instance of class Player
-  rws_amartins::MyPlayer my_player(name, team);
-  ROS_INFO_STREAM("( " << name << " , " << team << " )");
+  rws_amartins::MyPlayer my_player(name, team, type);
+  ROS_INFO_STREAM("( " << name << " , " << team << " , " << type << " )");
 
-  ros::Rate loop_rate(10);
-
-  while (ros::ok())
-  {
-    my_player.move();
-    ros::spinOnce();
-    loop_rate.sleep();
-  }
+  ros::spin();
 }
