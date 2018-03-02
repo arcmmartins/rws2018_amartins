@@ -132,14 +132,14 @@ public:
     marker.pose.orientation.y = 0.0;
     marker.pose.orientation.z = 0.0;
     marker.pose.orientation.w = 1.0;
-    marker.scale.x = 1;
-    marker.scale.y = 1;
-    marker.scale.z = 1;
+    marker.scale.x = 0.4;
+    marker.scale.y = 0.4;
+    marker.scale.z = 0.4;
     marker.color.a = 1.0;  // Don't forget to set the alpha!
     marker.color.r = 0.0;
     marker.color.g = 0.0;
     marker.color.b = 1.0;
-    marker.text = "nando fabricio";
+    marker.text = "nando fabricio in da house";
     vis_pub.publish(marker);
   }
 
