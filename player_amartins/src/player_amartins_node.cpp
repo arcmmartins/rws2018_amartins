@@ -97,8 +97,6 @@ public:
     gettimeofday(&t1, NULL);
     srand(t1.tv_usec);
     y = ((double)rand() / (double)RAND_MAX * 10 - 5);
-    speedx = 0.5;
-    speedy = 0.5;
     alfa = M_PI;
     ROS_INFO_STREAM("( " << name << " , " << team << " , " << type << " , x: " << x << " , y: " << y << " )");
 
@@ -261,7 +259,7 @@ public:
 private:
   float x, y;
   string type;
-  double speedx, speedy, alfa;
+  double alfa;
   NodeHandle n;
   shared_ptr<Subscriber> sub;
   Transform transform;
