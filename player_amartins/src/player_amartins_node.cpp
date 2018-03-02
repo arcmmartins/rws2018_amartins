@@ -87,7 +87,8 @@ public:
     this->type = type;
     x = 0;
     y = 0;
-    speed = 0.5;
+    speedx= 0.5;
+    speedy= 0.5;
     red_team = shared_ptr<Team>(new Team("red"));
     blue_team = shared_ptr<Team>(new Team("blue"));
     green_team = shared_ptr<Team>(new Team("green"));
@@ -101,13 +102,21 @@ public:
     
     if (x > 5)
     {
-      speed = -0.3;
+      speedx = -0.3;
     }
     if (x < -5)
     {
-      speed = 0.3;
+      speedx = 0.3;
     }
-    transform.setOrigin(tf::Vector3(x += speed, 5, 0.0));
+    if (y > 5)
+    {
+      speedy = -0.3;
+    }
+    if (y < -5)
+    {
+      speedy = 0.3;
+    }
+    transform.setOrigin(tf::Vector3(x += speedx, y +=speedy, 0.0));
     tf::Quaternion q;
     q.setRPY(0, 0, 0);
     transform.setRotation(q);
@@ -117,7 +126,7 @@ public:
 private:
   float x, y;
   string type;
-  double speed;
+  double speedx, speedy;
   ros::NodeHandle n;
   shared_ptr<ros::Subscriber> sub;
 };
