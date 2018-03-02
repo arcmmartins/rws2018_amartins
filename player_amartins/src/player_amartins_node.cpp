@@ -85,8 +85,8 @@ public:
   {
     setTeamName(team);
     this->type = type;
-    x = 0;
-    y = 0;
+    x = randomizePosition();
+    y = randomizePosition();
     speedx= 0.5;
     speedy= 0.5;
     red_team = shared_ptr<Team>(new Team("red"));
