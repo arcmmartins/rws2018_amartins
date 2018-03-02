@@ -11,6 +11,7 @@
 #include <std_msgs/String.h>
 #include <tf/transform_broadcaster.h>
 #include "ros/ros.h"
+#include <visualization_msgs/Marker.h>
 
 using namespace std;
 using namespace boost;
@@ -103,6 +104,7 @@ public:
     sub = shared_ptr<ros::Subscriber>(new ros::Subscriber());
     *sub = n.subscribe("/make_a_play", 1000, &MyPlayer::move, this);
     warp();
+    vis_pub = n.advertise<visualization_msgs::Marker>( "/bocas", 0 );
   }
 
   void warp()
@@ -114,6 +116,33 @@ public:
     br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", name));
   }
 
+  void piropo()
+  {
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = "world";
+    marker.header.stamp = ros::Time();
+    marker.ns = name;
+    marker.id = 0;
+    marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+    marker.action = visualization_msgs::Marker::ADD;
+    marker.pose.position.x = x;
+    marker.pose.position.y = y;
+    marker.pose.position.z = 3;
+    marker.pose.orientation.x = 0.0;
+    marker.pose.orientation.y = 0.0;
+    marker.pose.orientation.z = 0.0;
+    marker.pose.orientation.w = 1.0;
+    marker.scale.x = 1;
+    marker.scale.y = 1;
+    marker.scale.z = 1;
+    marker.color.a = 1.0;  // Don't forget to set the alpha!
+    marker.color.r = 0.0;
+    marker.color.g = 0.0;
+    marker.color.b = 1.0;
+    marker.text = "nando fabricio";
+    vis_pub.publish(marker);
+  }
+
   void move(const rws2018_msgs::MakeAPlay::ConstPtr& msg)
   {
     double max_dist = msg->turtle;
@@ -121,7 +150,7 @@ public:
     /* AI */
     double intended_dist_x = 6;
     double intended_dist_y = 6;
-    double intended_delta_alpha = M_PI/2;
+    double intended_delta_alpha = M_PI / 2;
     /******/
 
     /* constrains */
@@ -143,6 +172,9 @@ public:
     displacement_transform.setRotation(q);
     transform = transform * displacement_transform;
     br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", name));
+    x = transform.getOrigin().x();
+    y = transform.getOrigin().y();
+    piropo();
   }
 
 private:
@@ -152,6 +184,7 @@ private:
   ros::NodeHandle n;
   shared_ptr<ros::Subscriber> sub;
   tf::Transform transform;
+  ros::Publisher vis_pub;
 };
 
 }  // end of namespace
