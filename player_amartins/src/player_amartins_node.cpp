@@ -40,7 +40,7 @@ public:
       return setTeamName("blue");
       break;
     default:
-      cout << "wrong team index given. Cannot set team" << endl;
+      ROS_ERROR_STREAM("wrong team index given. Cannot set team");
       break;
     }
   }
@@ -55,7 +55,7 @@ public:
     }
     else
     {
-      cout << "cannot set team name to " << team << endl;
+      ROS_ERROR_STREAM("cannot set team name to " << team);
       return 0;
     }
   }
@@ -109,6 +109,7 @@ int main(int argc, char **argv)
   ros::NodeHandle n;
   // Creating an instance of class Player
   rws_amartins::MyPlayer my_player(name, team);
+  ROS_INFO_STREAM("( " << name << " , " << team << " )");
 
   ros::Rate loop_rate(10);
 
