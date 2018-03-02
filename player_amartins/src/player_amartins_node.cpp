@@ -172,6 +172,25 @@ public:
     return tmp_player;
   }
 
+  string findClosestHunter()
+  {
+    double min_dist = 100000;
+    string tmp_player = "tmarques";
+    for (int i = 0; i < my_hunters->player_names.size(); i++)
+    {
+      string player_name = my_hunters->player_names[i];
+      double dist = getDistanceToPLayer(player_name);
+      if (isnan(dist))
+        continue;
+      if (dist < min_dist)
+      {
+        min_dist = dist;
+        tmp_player = player_name;
+      }
+    }
+    return tmp_player;
+  }
+
   double getDistanceToPLayer(string other_player, double time_to_wait = DEFAULT_TIME)
   {
     StampedTransform t;  // The transform object
@@ -227,10 +246,24 @@ public:
 
     /* AI */
     string target = findClosestPlayer();
-    double intended_dist = 3;
-    double intended_delta_alpha = getAngleToPLayer(target);
-    if (isnan(intended_delta_alpha))
-      intended_delta_alpha = 0;
+    string closest_hunter = findClosestHunter();
+    double intended_dist;
+    double intended_delta_alpha;
+    if (getDistanceToPLayer(target) < getDistanceToPLayer(closest_hunter))
+    {
+      intended_dist = 3;
+      intended_delta_alpha = getAngleToPLayer(target);
+      if (isnan(intended_delta_alpha))
+        intended_delta_alpha = 0;
+    }
+    else
+    {
+      intended_dist = 3;
+      intended_delta_alpha = -getAngleToPLayer(closest_hunter);
+      if (isnan(intended_delta_alpha))
+        intended_delta_alpha = 0;
+    }
+
     /******/
 
     /* constrains */
