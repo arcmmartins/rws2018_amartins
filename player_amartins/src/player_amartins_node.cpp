@@ -107,7 +107,6 @@ public:
     {
       speed = 0.3;
     }
-  ROS_INFO_STREAM(name << " moving at speed " << speed << " and am at " << x);
     transform.setOrigin(tf::Vector3(x += speed, 5, 0.0));
     tf::Quaternion q;
     q.setRPY(0, 0, 0);
