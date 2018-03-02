@@ -85,19 +85,30 @@ public:
   {
     setTeamName(team);
     this->type = type;
+    x = 0;
+    y = 0;
+    speed = 0.5;
     red_team = shared_ptr<Team>(new Team("red"));
     blue_team = shared_ptr<Team>(new Team("blue"));
     green_team = shared_ptr<Team>(new Team("green"));
-    sub = shared_ptr<ros::Subscriber> (new ros::Subscriber());
+    sub = shared_ptr<ros::Subscriber>(new ros::Subscriber());
     *sub = n.subscribe("/make_a_play", 1000, &MyPlayer::move, this);
   }
 
   void move(const rws2018_msgs::MakeAPlay::ConstPtr& msg)
   {
-    static float x = 0;
     tf::Transform transform;
-    ROS_INFO_STREAM(name << " moving" );
-    transform.setOrigin(tf::Vector3(x += 0.01, 5, 0.0));
+    
+    if (x > 5)
+    {
+      speed = -0.3;
+    }
+    if (x < -5)
+    {
+      speed = 0.3;
+    }
+  ROS_INFO_STREAM(name << " moving at speed " << speed << " and am at " << x);
+    transform.setOrigin(tf::Vector3(x += speed, 5, 0.0));
     tf::Quaternion q;
     q.setRPY(0, 0, 0);
     transform.setRotation(q);
@@ -105,6 +116,7 @@ public:
   }
 
 private:
+  float x, y;
   string type;
   double speed;
   ros::NodeHandle n;
