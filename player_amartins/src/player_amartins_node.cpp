@@ -10,9 +10,9 @@
 #include <rws2018_msgs/MakeAPlay.h>
 #include <std_msgs/String.h>
 #include <tf/transform_broadcaster.h>
+#include <tf/transform_listener.h>
 #include <visualization_msgs/Marker.h>
 #include "ros/ros.h"
-#include <tf/transform_listener.h>
 #define DEFAULT_TIME 0.05
 using namespace std;
 using namespace boost;
@@ -82,6 +82,9 @@ public:
   shared_ptr<Team> red_team;
   shared_ptr<Team> blue_team;
   shared_ptr<Team> green_team;
+  boost::shared_ptr<Team> my_team;
+  boost::shared_ptr<Team> my_preys;
+  boost::shared_ptr<Team> my_hunters;
   TransformBroadcaster br;
   MyPlayer(string name, string team, string type) : Player(name)
   {
@@ -102,6 +105,29 @@ public:
     red_team = shared_ptr<Team>(new Team("red"));
     blue_team = shared_ptr<Team>(new Team("blue"));
     green_team = shared_ptr<Team>(new Team("green"));
+
+    if (red_team->playerBelongsToTeam(name))
+    {
+      my_team = red_team;
+      my_preys = green_team;
+      my_hunters = blue_team;
+      setTeamName("red");
+    }
+    else if (green_team->playerBelongsToTeam(name))
+    {
+      my_team = green_team;
+      my_preys = blue_team;
+      my_hunters = red_team;
+      setTeamName("green");
+    }
+    else if (blue_team->playerBelongsToTeam(name))
+    {
+      my_team = blue_team;
+      my_preys = red_team;
+      my_hunters = green_team;
+      setTeamName("blue");
+    }
+
     sub = shared_ptr<Subscriber>(new Subscriber());
     *sub = n.subscribe("/make_a_play", 1000, &MyPlayer::move, this);
     vis_pub = n.advertise<visualization_msgs::Marker>("/bocas", 0);
@@ -110,23 +136,60 @@ public:
     piropo("do not fear, nando fabricio is here", 1);
   }
 
+  double getAngleToPLayer(string other_player, double time_to_wait = DEFAULT_TIME)
+  {
+    StampedTransform t;  // The transform object
+    Time now = Time(0);  // get the latest transform received
 
-  double getAngleToPLayer(string other_player, double time_to_wait=DEFAULT_TIME)
+    try
+    {
+      listener.waitForTransform(name, other_player, now, Duration(time_to_wait));
+      listener.lookupTransform(name, other_player, now, t);
+    }
+    catch (TransformException& ex)
+    {
+      ROS_ERROR("%s", ex.what());
+      return NAN;
+    }
+
+    return atan2(t.getOrigin().y(), t.getOrigin().x());
+  }
+
+  string findClosestPlayer()
+  {
+    double min_dist = 100000;
+    string tmp_player = "moliveira";
+    for (int i = 0; i< my_preys->player_names.size();i++)
+    {
+      string player_name = my_preys->player_names[i];
+      double dist = getDistanceToPLayer(player_name);
+      if (dist < min_dist)
       {
-        StampedTransform t; //The transform object
-        Time now = Time(0); //get the latest transform received
-
-        try{
-          listener.waitForTransform(name, other_player, now, Duration(time_to_wait));
-          listener.lookupTransform(name, other_player, now, t);
-        }
-        catch (TransformException& ex){
-          ROS_ERROR("%s",ex.what());
-          return NAN;
-        }
-
-        return atan2(t.getOrigin().y(), t.getOrigin().x());
+        min_dist = dist;
+        tmp_player = player_name;
       }
+    }
+    return tmp_player;
+  }
+
+  double getDistanceToPLayer(string other_player, double time_to_wait = DEFAULT_TIME)
+  {
+    StampedTransform t;  // The transform object
+    Time now = Time(0);  // get the latest transform received
+
+    try
+    {
+      listener.waitForTransform(name, other_player, now, Duration(time_to_wait));
+      listener.lookupTransform(name, other_player, now, t);
+    }
+    catch (TransformException& ex)
+    {
+      ROS_ERROR("%s", ex.what());
+      return NAN;
+    }
+
+    return sqrt(t.getOrigin().y() * t.getOrigin().y() + t.getOrigin().x() * t.getOrigin().x());
+  }
 
   void warp()
   {
@@ -162,12 +225,12 @@ public:
     double max_dist = msg->turtle;
     double max_delta_alpha = M_PI / 30;
 
-
     /* AI */
+    string target = findClosestPlayer();
     double intended_dist_x = 3;
     double intended_dist_y = 3;
-    double intended_delta_alpha = getAngleToPLayer("blourenco");
-    if(isnan(intended_delta_alpha))
+    double intended_delta_alpha = getAngleToPLayer(target);
+    if (isnan(intended_delta_alpha))
       intended_delta_alpha = 0;
     /******/
 
@@ -192,7 +255,7 @@ public:
     br.sendTransform(StampedTransform(transform, Time::now(), "world", name));
     x = transform.getOrigin().x();
     y = transform.getOrigin().y();
-    piropo("NANDO FABRICIO vai te apanhar blourenco", 0);
+    piropo("NANDO FABRICIO vai te apanhar " + target, 0);
   }
 
 private:
