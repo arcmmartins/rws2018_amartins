@@ -127,11 +127,11 @@ public:
       my_hunters = green_team;
       setTeamName("blue");
     }
-
+    point_cloud_guess = "soda_can";
     sub = shared_ptr<Subscriber>(new Subscriber());
     pc_sub = shared_ptr<Subscriber>(new Subscriber());
     *sub = n.subscribe("/make_a_play", 1000, &MyPlayer::move, this);
-    *pc_sub = n.subscribe("/object_point_cloud", 1000, &MyPlayer::listenToPointCloud, this);
+    *pc_sub = n.subscribe("/object_point_cloud", 100, &MyPlayer::listenToPointCloud, this);
     vis_pub = n.advertise<visualization_msgs::Marker>("/bocas", 0);
     warp();
 
@@ -141,12 +141,14 @@ public:
 
   void listenToPointCloud(const sensor_msgs::PointCloud2::ConstPtr &msg)
   {
+    ROS_INFO_STREAM("recebi soda_can, que sede que tenho");
+    point_cloud_guess = "soda_can";
   }
 
   bool respondToGameQuery(rws2018_msgs::GameQuery::Request &req,
                           rws2018_msgs::GameQuery::Response &res)
   {
-    res.resposta = "soda_can";
+    res.resposta = point_cloud_guess;
     return true;
   }
 
@@ -312,6 +314,7 @@ private:
   vector<string> alive_preys;
   vector<string> alive_hunters;
   double alfa;
+  string point_cloud_guess;
   NodeHandle n;
   shared_ptr<Subscriber> sub;
   shared_ptr<Subscriber> pc_sub;
