@@ -139,7 +139,7 @@ public:
   bool respondToGameQuery(rws2018_msgs::GameQuery::Request &req,
                           rws2018_msgs::GameQuery::Response &res)
   {
-    res.resposta = "a resposta e sempre 42";
+    res.resposta = "banana";
     return true;
   }
 
