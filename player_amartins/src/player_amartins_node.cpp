@@ -8,6 +8,7 @@
 // ros
 #include <rws2018_libs/team.h>
 #include <rws2018_msgs/MakeAPlay.h>
+#include <rws2018_msgs/GameQuery.h>
 #include <std_msgs/String.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
@@ -33,18 +34,18 @@ public:
   {
     switch (team_index)
     {
-      case 0:
-        return setTeamName("red");
-        break;
-      case 1:
-        return setTeamName("green");
-        break;
-      case 2:
-        return setTeamName("blue");
-        break;
-      default:
-        ROS_ERROR_STREAM("wrong team index given. Cannot set team");
-        break;
+    case 0:
+      return setTeamName("red");
+      break;
+    case 1:
+      return setTeamName("green");
+      break;
+    case 2:
+      return setTeamName("blue");
+      break;
+    default:
+      ROS_ERROR_STREAM("wrong team index given. Cannot set team");
+      break;
     }
   }
 
@@ -69,7 +70,7 @@ public:
     return team;
   }
 
-  string name;  // A public atribute
+  string name; // A public atribute
 
 private:
   string team;
@@ -132,19 +133,27 @@ public:
     warp();
 
     piropo("do not fear, nando fabricio is here", 1);
+    game_query_service = n.advertiseService("/" + name + "/game_query", &MyPlayer::respondToGameQuery, this);
+  }
+
+  bool respondToGameQuery(rws2018_msgs::GameQuery::Request &req,
+                          rws2018_msgs::GameQuery::Response &res)
+  {
+    res.resposta = "a resposta e sempre 42";
+    return true;
   }
 
   double getAngleToPLayer(string other_player, double time_to_wait = DEFAULT_TIME)
   {
-    StampedTransform t;  // The transform object
-    Time now = Time(0);  // get the latest transform received
+    StampedTransform t; // The transform object
+    Time now = Time(0); // get the latest transform received
 
     try
     {
       listener.waitForTransform(name, other_player, now, Duration(time_to_wait));
       listener.lookupTransform(name, other_player, now, t);
     }
-    catch (TransformException& ex)
+    catch (TransformException &ex)
     {
       ROS_ERROR("%s", ex.what());
       return NAN;
@@ -176,9 +185,9 @@ public:
   {
     double min_dist = 100000;
     string tmp_player = "tmarques";
-    for (int i = 0; i < my_hunters->player_names.size(); i++)
+    for (int i = 0; i < alive_hunters.size(); i++)
     {
-      string player_name = my_hunters->player_names[i];
+      string player_name = alive_hunters[i];
       double dist = getDistanceToPLayer(player_name);
       if (isnan(dist))
         continue;
@@ -193,15 +202,15 @@ public:
 
   double getDistanceToPLayer(string other_player, double time_to_wait = DEFAULT_TIME)
   {
-    StampedTransform t;  // The transform object
-    Time now = Time(0);  // get the latest transform received
+    StampedTransform t; // The transform object
+    Time now = Time(0); // get the latest transform received
 
     try
     {
       listener.waitForTransform(name, other_player, now, Duration(time_to_wait));
       listener.lookupTransform(name, other_player, now, t);
     }
-    catch (TransformException& ex)
+    catch (TransformException &ex)
     {
       ROS_ERROR("%s", ex.what());
       return NAN;
@@ -231,7 +240,7 @@ public:
     marker.action = visualization_msgs::Marker::ADD;
     marker.pose.orientation.w = 1.0;
     marker.scale.z = 0.3;
-    marker.color.a = 1.0;  // Don't forget to set the alpha!
+    marker.color.a = 1.0; // Don't forget to set the alpha!
     marker.color.r = 0.3;
     marker.color.g = 0.0;
     marker.color.b = 1.0;
@@ -239,11 +248,12 @@ public:
     vis_pub.publish(marker);
   }
 
-  void move(const rws2018_msgs::MakeAPlay::ConstPtr& msg)
+  void move(const rws2018_msgs::MakeAPlay::ConstPtr &msg)
   {
     double max_dist = msg->turtle;
     double max_delta_alpha = M_PI / 30;
     alive_preys = msg->red_alive;
+    alive_hunters = msg->green_alive;
     /* AI */
     string target = findClosestPlayer();
     string closest_hunter = findClosestHunter();
@@ -259,7 +269,8 @@ public:
       if (isnan(intended_delta_alpha))
         intended_delta_alpha = 0;
     }
-    else if (getDistanceToPLayer(closest_hunter) < 1 && getDistanceToPLayer(closest_hunter) < getDistanceToPLayer(target)){
+    else if (getDistanceToPLayer(closest_hunter) < 1 && getDistanceToPLayer(closest_hunter) < getDistanceToPLayer(target))
+    {
       intended_dist = 3;
       intended_delta_alpha = -getAngleToPLayer(closest_hunter);
       if (isnan(intended_delta_alpha))
@@ -268,9 +279,7 @@ public:
 
     /* constrains */
     double actual_dist = abs(intended_dist) > max_dist ? max_dist : intended_dist;
-    double actual_delta_alpha = fabs(intended_delta_alpha) > fabs(max_delta_alpha) ?
-                                    max_delta_alpha * intended_delta_alpha / fabs(intended_delta_alpha) :
-                                    intended_delta_alpha;
+    double actual_delta_alpha = fabs(intended_delta_alpha) > fabs(max_delta_alpha) ? max_delta_alpha * intended_delta_alpha / fabs(intended_delta_alpha) : intended_delta_alpha;
     /*************/
 
     /* bounds */
@@ -292,7 +301,9 @@ public:
 private:
   float x, y;
   string type;
+  ros::ServiceServer game_query_service;
   vector<string> alive_preys;
+  vector<string> alive_hunters;
   double alfa;
   NodeHandle n;
   shared_ptr<Subscriber> sub;
@@ -301,9 +312,9 @@ private:
   TransformListener listener;
 };
 
-}  // end of namespace
+} // end of namespace
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
   string name = "amartins";
   string team = "blue";
