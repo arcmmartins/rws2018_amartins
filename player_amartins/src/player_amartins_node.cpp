@@ -141,8 +141,35 @@ public:
 
   void listenToPointCloud(const sensor_msgs::PointCloud2::ConstPtr &msg)
   {
-    ROS_INFO_STREAM("recebi soda_can, que sede que tenho");
-    point_cloud_guess = "soda_can";
+
+    switch (msg->width)
+    {
+    case 3805:
+    {
+      point_cloud_guess = "soda_can";
+      break;
+    }
+    case 3979:
+    {
+      point_cloud_guess = "banana";
+      break;
+    }
+    case 1570:
+    {
+      point_cloud_guess = "tomato";
+      break;
+    }
+    case 3468:
+    {
+      point_cloud_guess = "onion";
+      break;
+    }
+    default:
+    {
+      point_cloud_guess = "soda_can";
+    }
+    }
+    ROS_INFO_STREAM("recebi " + point_cloud_guess + " , que sede que tenho");
   }
 
   bool respondToGameQuery(rws2018_msgs::GameQuery::Request &req,
