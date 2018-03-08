@@ -8,6 +8,7 @@
 // ros
 #include <rws2018_libs/team.h>
 #include <rws2018_msgs/MakeAPlay.h>
+#include "sensor_msgs/PointCloud2.h"
 #include <rws2018_msgs/GameQuery.h>
 #include <std_msgs/String.h>
 #include <tf/transform_broadcaster.h>
@@ -128,7 +129,9 @@ public:
     }
 
     sub = shared_ptr<Subscriber>(new Subscriber());
+    pc_sub = shared_ptr<Subscriber>(new Subscriber());
     *sub = n.subscribe("/make_a_play", 1000, &MyPlayer::move, this);
+    *pc_sub = n.subscribe("/object_point_cloud", 1000, &MyPlayer::listenToPointCloud, this);
     vis_pub = n.advertise<visualization_msgs::Marker>("/bocas", 0);
     warp();
 
@@ -136,10 +139,14 @@ public:
     game_query_service = n.advertiseService("/" + name + "/game_query", &MyPlayer::respondToGameQuery, this);
   }
 
+  void listenToPointCloud(const sensor_msgs::PointCloud2::ConstPtr &msg)
+  {
+  }
+
   bool respondToGameQuery(rws2018_msgs::GameQuery::Request &req,
                           rws2018_msgs::GameQuery::Response &res)
   {
-    res.resposta = "banana";
+    res.resposta = "soda_can";
     return true;
   }
 
@@ -307,6 +314,7 @@ private:
   double alfa;
   NodeHandle n;
   shared_ptr<Subscriber> sub;
+  shared_ptr<Subscriber> pc_sub;
   Transform transform;
   Publisher vis_pub;
   TransformListener listener;
